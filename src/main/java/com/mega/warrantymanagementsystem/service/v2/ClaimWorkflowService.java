@@ -28,6 +28,9 @@ public class ClaimWorkflowService {
     private WarrantyClaimProgressRepository progressRepository;
 
     @Autowired
+    private RepairPartService repairPartService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     // ---------------- Technician hoàn tất REPAIR -> HANDOVER ----------------
@@ -74,6 +77,7 @@ public class ClaimWorkflowService {
         if (done) {
             claim.setStatus(WarrantyClaimStatus.DONE);
             logProgress(claim, WarrantyClaimStatus.DONE);
+            repairPartService.handleRepairParts(claimId);
         }
 
         warrantyClaimRepository.save(claim);
