@@ -94,7 +94,7 @@ public class RepairPartService {
                 remaining -= take;
 
                 // ======= Báo về thống kê: dùng repair -------
-                partStatisticService.applyRepairUsed(partNumber, take);
+//                partStatisticService.applyRepairUsed(partNumber, take);
             }
 
             if (remaining > 0) {
