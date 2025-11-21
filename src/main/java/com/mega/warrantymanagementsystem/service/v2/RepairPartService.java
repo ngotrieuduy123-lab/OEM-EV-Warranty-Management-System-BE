@@ -36,6 +36,9 @@ public class RepairPartService {
     private PartUnderWarrantyRepository partUnderWarrantyRepository;
 
     @Autowired
+    private PartStatisticService partStatisticService;
+
+    @Autowired
     private PartService partService;
 
     @Autowired
@@ -89,6 +92,9 @@ public class RepairPartService {
                 warehousePartRepository.save(wp);
                 partService.updateLowPartStatus(wp.getWarehouse(), wp);
                 remaining -= take;
+
+                // ======= Báo về thống kê: dùng repair -------
+                partStatisticService.applyRepairUsed(partNumber, take);
             }
 
             if (remaining > 0) {
@@ -134,6 +140,9 @@ public class RepairPartService {
         wp.setQuantity(wp.getQuantity() + quantity);
         warehousePartRepository.save(wp);
         partService.updateLowPartStatus(wp.getWarehouse(), wp);
+
+        // Cập nhật thống kê tổng quantity
+        partStatisticService.applyAddQuantityToStatistic(partNumber, quantity);
     }
 
     // ==================== LOCATION MATCH SCORE ====================

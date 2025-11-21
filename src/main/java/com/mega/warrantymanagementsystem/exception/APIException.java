@@ -73,4 +73,8 @@ public class APIException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }
 
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<String> handleDateTimeParse(DateTimeParseException ex) {
+        return ResponseEntity.status(400).body(ex.getMessage());
+    }
 }
