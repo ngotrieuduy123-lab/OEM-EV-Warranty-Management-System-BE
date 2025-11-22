@@ -77,7 +77,6 @@ public class ClaimWorkflowService {
         if (done) {
             claim.setStatus(WarrantyClaimStatus.DONE);
             logProgress(claim, WarrantyClaimStatus.DONE);
-            repairPartService.handleRepairParts(claimId);
         }
 
         warrantyClaimRepository.save(claim);
@@ -102,6 +101,7 @@ public class ClaimWorkflowService {
         claim.setEvmDescription(description);
         claim.setStatus(WarrantyClaimStatus.REPAIR);
         logProgress(claim, WarrantyClaimStatus.REPAIR);
+        repairPartService.handleRepairParts(claimId);
 
         warrantyClaimRepository.save(claim);
         return mapToResponse(claim);
