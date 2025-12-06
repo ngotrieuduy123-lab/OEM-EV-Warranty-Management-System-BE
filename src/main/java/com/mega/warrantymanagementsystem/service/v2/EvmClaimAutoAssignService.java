@@ -39,20 +39,24 @@ public class EvmClaimAutoAssignService {
 
     @Transactional
     public List<WarrantyClaimResponse> autoAssignDecideClaimsToEvm() {
-        List<Account> evmStaffs = accountRepository.findByRole_RoleNameAndEnabledTrue(RoleName.EVM_STAFF)
-                .stream().sorted(Comparator.comparing(Account::getAccountId)).collect(Collectors.toList());
 
-        if (evmStaffs.isEmpty())
+        List<Account> evmStaffs = accountRepository
+                .findByRole_RoleNameAndEnabledTrue(RoleName.EVM_STAFF);
+
+        evmStaffs.sort(Comparator.comparing(Account::getAccountId));
+
+        if (evmStaffs.isEmpty()) {
             throw new ResourceNotFoundException("Không có EVM Staff nào đang hoạt động.");
+        }
 
-        List<WarrantyClaim> pendingClaims = warrantyClaimRepository.findAll().stream()
-                .filter(c -> c.getStatus() == WarrantyClaimStatus.DECIDE && c.getEvm() == null)
-                .sorted(Comparator.comparing(WarrantyClaim::getClaimId))
-                .collect(Collectors.toList());
+        // LẤY CLAIMS BẰNG LOCK
+        List<WarrantyClaim> pendingClaims = warrantyClaimRepository.lockAllPendingDecideClaims();
 
-        if (pendingClaims.isEmpty())
+        if (pendingClaims.isEmpty()) {
             throw new ResourceNotFoundException("Không có WarrantyClaim nào ở trạng thái DECIDE để gán.");
+        }
 
+        // LẤY STATE
         EvmAssignmentState state = stateRepository.findById("EVM_ASSIGNMENT_TRACKER")
                 .orElseGet(() -> {
                     EvmAssignmentState s = new EvmAssignmentState();
@@ -61,14 +65,21 @@ public class EvmClaimAutoAssignService {
                 });
 
         int index = state.getLastIndex();
+
         List<WarrantyClaimResponse> result = new ArrayList<>();
 
         for (WarrantyClaim claim : pendingClaims) {
+
             index = (index + 1) % evmStaffs.size();
             Account selectedEvm = evmStaffs.get(index);
+
+            // SET EVM
             claim.setEvm(selectedEvm);
 
+            // LƯU CLAIM
             warrantyClaimRepository.save(claim);
+
+            // LOG PROGRESS
             logProgress(claim, WarrantyClaimStatus.DECIDE);
 
             WarrantyClaimResponse response = modelMapper.map(claim, WarrantyClaimResponse.class);
@@ -78,6 +89,7 @@ public class EvmClaimAutoAssignService {
 
         state.setLastIndex(index);
         stateRepository.save(state);
+
         return result;
     }
 

@@ -2,7 +2,9 @@ package com.mega.warrantymanagementsystem.repository;
 
 import com.mega.warrantymanagementsystem.entity.WarrantyClaim;
 import com.mega.warrantymanagementsystem.entity.entity.WarrantyClaimStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -51,6 +53,27 @@ public interface WarrantyClaimRepository extends JpaRepository<WarrantyClaim, St
             @Param("year") int year,
             @Param("month") int month
     );
+
+    // Locked SELECT toàn bộ DECIDE claims chưa có EVM (FOR UPDATE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c
+        FROM WarrantyClaim c
+        WHERE c.status = com.mega.warrantymanagementsystem.entity.entity.WarrantyClaimStatus.DECIDE
+          AND c.evm IS NULL
+        ORDER BY c.claimId
+        """)
+    List<WarrantyClaim> lockAllPendingDecideClaims();
+
+
+    // Lock 1 claim đơn lẻ nếu sau này cần xử lý batch nhỏ
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT c
+        FROM WarrantyClaim c
+        WHERE c.claimId = :claimId
+        """)
+    WarrantyClaim lockClaimById(@Param("claimId") String claimId);
 
 
 }
