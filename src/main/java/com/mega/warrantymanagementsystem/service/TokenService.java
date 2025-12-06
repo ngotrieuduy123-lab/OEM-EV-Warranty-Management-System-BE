@@ -9,6 +9,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -21,8 +22,8 @@ public class TokenService {
     @Autowired
     AccountRepository accountRepository;
 
-    private final String SECRET_KEY =
-            "07082005trantiendanhse193719troioilatroitaisaolaiphailammonay";
+    @Value("${jwt.secret}")
+    private String SECRET_KEY;
 
     public SecretKey getSignInKey(){
 //        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
